@@ -2,7 +2,9 @@
 
 Flash cards for early readers (1st and 2nd grade). The child reads each word out loud, and the adult marks it right or wrong. The app tracks which words are known and which still need practice.
 
-**Live app:** https://claude.ai/artifact/2C2czPfsfcvGic9KEkS1Ky (shared as "Anyone with the link")
+**Live app:** https://btaratutin.github.io/reading-practice-cards/
+
+Also on Claude: https://claude.ai/artifact/2C2czPfsfcvGic9KEkS1Ky (shared as "Anyone with the link"). Progress is saved separately on each site.
 
 ## How to use it
 
@@ -40,5 +42,6 @@ Progress is saved only in the browser on the device that uses it (localStorage k
 ## Files
 
 - `reading-practice-cards.html`: the whole app in one file (HTML, CSS, JS, and all word lists). The live artifact is published from this file.
+- `index.html`: sends visitors of the GitHub Pages site to the app. Pushing to `main` updates the site.
 - `archive/sound-contrast-sets.js`: archived "Sounds that get mixed up" sets (short o vs short e, j vs w) with look-alike pairs, plus the code to bring them back for a specific student.
 - `Context.md`: decisions, data model and history for continuing work in a new chat.
