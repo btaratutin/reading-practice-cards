@@ -4,8 +4,6 @@ Flash cards for early readers (1st and 2nd grade). The child reads each word out
 
 **Live app:** https://btaratutin.github.io/reading-practice-cards/
 
-Also on Claude: https://claude.ai/artifact/2C2czPfsfcvGic9KEkS1Ky (shared as "Anyone with the link"). Progress is saved separately on each site.
-
 ## How to use it
 
 1. **Select:** Pick one word set. Each card says what it practices. Tap **Start practice**. It picks up where you left off: untried words first, then missed words, then a review of the whole set. The line under the button says which.
