@@ -21,7 +21,7 @@ Last updated 2026-11-24. Read this first when continuing in a new chat.
 - Card format: title, word count in small muted text, then the description.
 - "Sight Word Sources" has the subheading "Common words kids learn to read on sight, from widely used classroom lists." The "Phonics Patterns" heading has the subheading: "Covers the core phonics patterns of 1st and 2nd grade, starting with the most common ones."
 - A word's status comes from its most recent try: known, practicing, or not tried.
-- Progress footer note: "Progress is saved in this browser on this device. Data is stored 100% locally and NEVER sent to servers."
+- Progress footer note: "Progress is saved only in this browser on this device. This app doesn't collect, upload or share your data."
 - The in-round tally (✓/✗/left) was removed on purpose.
 - No results screen and no round history (removed as confusing). Finishing a pile shows a one-line "Nice work" note on Progress. The rounds log (`S.sessions`) was dropped in version 16 and is deleted from old saves.
 - Progress layout, top to bottom: one labeled bar (known/practicing/not tried with counts inside, plus a legend; this replaced three count tiles), action buttons (below the bar so the choice comes after seeing the status), By pattern (phonics only, "N of 10 known" per pattern with its rule), word chips (Practicing, Known, Not tried, with no per-word numbers), Reset, note.

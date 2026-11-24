@@ -507,7 +507,7 @@ function renderProgress(){
       ${confirmReset ? `<span class="muted">Reset progress and start over?</span><button class="btn b-miss" id="yesReset">Reset progress</button><button class="btn btn-ghost" id="noReset">Cancel</button>`
         : `<button class="reset" id="reset">Reset progress <span>(to start over)</span></button>`}
     </div>
-    <p class="hint">Progress is saved in this browser on this device. Data is stored 100% locally and NEVER sent to servers.</p>`}`;
+    <p class="hint">Progress is saved only in this browser on this device. This app doesn't collect, upload or share your data.</p>`}`;
   flash = "";
   view.querySelectorAll("[data-act]").forEach(b => b.onclick = () => start(b.dataset.act));
   const r = view.querySelector("#reset"); if (r) r.onclick = () => { confirmReset=true; renderProgress(); };
