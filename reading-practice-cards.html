@@ -1,0 +1,529 @@
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Reading Practice Cards</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Andika:wght@400;700&family=Lexend:wght@400;500;600&display=swap">
+<style>
+/* Layout: one-screen app, two tabs (Select, Progress). Practice opens full screen over them; the word sits on handwriting-paper lines */
+:root{
+  --bg:#f3f6fb; --surface:#ffffff; --ink:#1d2a3a; --muted:#66748a; --line:#dbe3ef;
+  --rule:#a9c3e6; --mid:#e9a3a3; --accent:#2f5fb3; --accent-ink:#ffffff; --accent-soft:#e3ecfa;
+  --good:#1f8a5b; --good-soft:#dff3ea; --miss:#c4523d; --miss-soft:#fbe6e1;
+  --word:"Andika",ui-rounded,"Comic Sans MS",system-ui,sans-serif;
+  --ui:"Lexend",system-ui,-apple-system,sans-serif;
+}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){
+  --bg:#121821; --surface:#1b2330; --ink:#e8eef7; --muted:#97a3b6; --line:#2c3746;
+  --rule:#3d5a85; --mid:#8a4a4a; --accent:#7ea6ec; --accent-ink:#0f1a2b; --accent-soft:#22324d;
+  --good:#5cc993; --good-soft:#173528; --miss:#ef8a74; --miss-soft:#3d221d; color-scheme:dark}}
+:root[data-theme="dark"]{
+  --bg:#121821; --surface:#1b2330; --ink:#e8eef7; --muted:#97a3b6; --line:#2c3746;
+  --rule:#3d5a85; --mid:#8a4a4a; --accent:#7ea6ec; --accent-ink:#0f1a2b; --accent-soft:#22324d;
+  --good:#5cc993; --good-soft:#173528; --miss:#ef8a74; --miss-soft:#3d221d; color-scheme:dark}
+*,*::before,*::after{box-sizing:border-box}
+html,body{height:100%;margin:0}
+body{background:var(--bg);color:var(--ink);font-family:var(--ui);font-size:16px;-webkit-tap-highlight-color:transparent}
+.app{height:100%;display:flex;flex-direction:column;max-width:560px;margin:0 auto}
+main{flex:1;overflow-y:auto;padding:20px 16px 24px;display:flex;flex-direction:column;gap:18px;min-height:0}
+h1{font-size:1.45rem;font-weight:600;margin:0;text-wrap:balance;line-height:1.25}
+h2{font-size:.75rem;font-weight:600;text-transform:uppercase;letter-spacing:.08em;color:var(--muted);margin:0}
+p{margin:0;line-height:1.5}
+.muted{color:var(--muted)}
+.eyebrow{font-size:.85rem;color:var(--muted);margin-bottom:2px}
+button{font:inherit;color:inherit;cursor:pointer;border:0;background:none}
+button:focus-visible,textarea:focus-visible{outline:3px solid var(--accent);outline-offset:2px}
+.btn{padding:15px 18px;border-radius:14px;font-weight:600;font-size:1rem;text-align:center;width:100%}
+.btn-primary{background:var(--accent);color:var(--accent-ink)}
+.btn-soft{background:var(--accent-soft);color:var(--accent)}
+.btn-ghost{border:1.5px solid var(--line)}
+.stack{display:flex;flex-direction:column;gap:10px}
+.linkbtn{color:var(--accent);font-weight:500;padding:6px 0}
+
+/* home: set picker */
+.sets{display:flex;flex-direction:column;gap:10px}
+.set{display:flex;flex-direction:column;gap:10px;padding:14px 16px;border-radius:16px;border:1.5px solid var(--line);background:var(--surface);text-align:left;width:100%}
+.set[aria-pressed="true"]{border-color:var(--accent);box-shadow:0 0 0 1px var(--accent) inset}
+.set .top{display:flex;align-items:flex-start;gap:12px}
+.set .top div{flex:1;min-width:0}
+.set b{display:block;font-weight:600}
+.set .note{font-size:.85rem;color:var(--muted)}
+.sub{font-size:.85rem;margin-top:4px}
+.set{position:relative;cursor:pointer}
+.editor{display:flex;flex-direction:column;gap:10px;padding-top:12px;border-top:1px solid var(--line);cursor:auto}
+.editor label{font-size:.85rem;color:var(--muted)}
+.editor .row{display:flex;gap:10px}
+.editor .row .btn{padding:12px 16px}
+.editor .row .btn-ghost{width:auto}
+.chev{display:grid;place-items:center;width:28px;height:28px;margin:-3px 2px 0 0;border-radius:8px;color:var(--muted);flex:none}
+.chev svg{width:18px;height:18px;transition:transform .2s}
+.chev[aria-expanded="true"] svg{transform:rotate(180deg)}
+.chev:hover{background:var(--accent-soft);color:var(--accent)}
+.set.shut{gap:0}
+.set.shut .top{align-items:center}
+.set.shut .check{margin-top:0}
+.set .edit{align-self:flex-start;padding:2px 0}
+.set .count{margin-left:8px;font-size:.8rem;font-weight:400;color:var(--muted)}
+.check{width:22px;height:22px;border-radius:50%;border:2px solid var(--line);flex:none;display:grid;place-items:center;margin-top:2px}
+.set[aria-pressed="true"] .check{border-color:var(--accent);background:var(--accent);color:var(--accent-ink)}
+.check svg{width:13px;height:13px}
+.meter{display:flex;flex-direction:column;gap:6px}
+.bar{display:flex;height:8px;border-radius:8px;overflow:hidden;background:var(--line)}
+.bar i{display:block;height:100%}
+.bar .g{background:var(--good)}.bar .m{background:var(--miss)}
+.legend{display:flex;flex-wrap:wrap;gap:4px 14px;font-size:.78rem;color:var(--muted);font-variant-numeric:tabular-nums}
+.legend span{display:inline-flex;align-items:center;gap:5px}
+.legend .dot{width:8px;height:8px}
+.meter.big .bar{height:30px;border-radius:10px;gap:2px;background:none}
+.meter.big .bar i{display:grid;place-items:center;font-size:.85rem;font-weight:600;font-style:normal;color:#fff;font-variant-numeric:tabular-nums;border-radius:4px}
+.meter.big .bar .n{background:var(--line);color:var(--muted)}
+.meter.big .legend{font-size:.85rem}
+textarea{width:100%;box-sizing:border-box;min-height:100px;border:1.5px solid var(--line);border-radius:12px;padding:10px;font:inherit;background:var(--bg);color:var(--ink);resize:vertical}
+.dock{position:sticky;bottom:0;padding-top:8px;background:linear-gradient(to bottom,transparent,var(--bg) 30%)}
+
+.btn-two{display:flex;flex-direction:column;align-items:center;gap:2px;padding:12px 18px}
+.btn-two small{font-size:.8rem;font-weight:400;opacity:.85}
+.btn[disabled]{opacity:.5;cursor:default}
+
+/* practice: the card screen; tapping a tab leaves it (every grade is already saved) */
+.topbar{display:flex;align-items:center;gap:12px}
+.mode-label{align-self:center;margin-top:-6px;padding:5px 12px;border-radius:999px;background:var(--accent-soft);color:var(--accent);font-size:.82rem;font-weight:500;font-variant-numeric:tabular-nums}
+.reset{color:var(--miss);font-weight:500;padding:6px 0}
+.reset span{color:var(--muted);font-weight:400}
+
+.again{position:absolute;top:14px;left:50%;transform:translateX(-50%);font-size:.78rem;font-weight:600;color:var(--miss);background:var(--miss-soft);padding:4px 10px;border-radius:8px;white-space:nowrap}
+.flash{background:var(--good-soft);color:var(--good);padding:12px 14px;border-radius:12px;font-weight:500}
+.progress{flex:1;height:8px;border-radius:8px;background:var(--line);overflow:hidden}
+.progress i{display:block;height:100%;background:var(--accent);transition:width .2s}
+.counter{font-variant-numeric:tabular-nums;color:var(--muted);font-size:.9rem}
+.stage{flex:1;display:flex;align-items:center;justify-content:center;min-height:240px;touch-action:pan-y}
+.card{width:100%;aspect-ratio:4/3;max-width:100%;background:var(--surface);border:1px solid var(--line);border-radius:22px;display:flex;align-items:center;justify-content:center;position:relative;overflow:hidden;box-shadow:0 10px 30px -18px rgba(20,40,80,.45);user-select:none;touch-action:pan-y;transition:transform .25s,opacity .25s}
+.card.dragging{transition:none}
+.lines{position:absolute;left:0;right:0;top:50%;transform:translateY(-50%);height:42%;pointer-events:none}
+.lines::before,.lines::after{content:"";position:absolute;left:0;right:0;height:2px;background:var(--rule)}
+.lines::before{top:0}.lines::after{bottom:0}
+.lines i{position:absolute;left:0;right:0;top:50%;border-top:2px dashed var(--mid)}
+.word{position:relative;font-family:var(--word);font-size:clamp(3rem,16vw,5.5rem);line-height:1;padding:0 12px;text-align:center;word-break:break-word}
+.stamp{position:absolute;top:16px;padding:6px 12px;border-radius:10px;font-weight:600;font-size:.9rem;opacity:0;transition:opacity .1s}
+.stamp.good{right:16px;background:var(--good-soft);color:var(--good)}
+.stamp.miss{left:16px;background:var(--miss-soft);color:var(--miss)}
+.answer{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.answer .btn{padding:18px;font-size:1.05rem}
+.b-miss{background:var(--miss-soft);color:var(--miss)}
+.b-good{background:var(--good-soft);color:var(--good)}
+.hint{font-size:.82rem;color:var(--muted);text-align:center}
+.panel{background:var(--surface);border:1px solid var(--line);border-radius:16px;padding:16px;display:flex;flex-direction:column;gap:12px}
+
+/* chips */
+.chips{display:flex;flex-wrap:wrap;gap:8px}
+.chip{max-width:100%;overflow-wrap:anywhere;font-family:var(--word);font-size:1.25rem;padding:5px 11px;border-radius:10px;background:var(--miss-soft);color:var(--miss);display:inline-flex;align-items:baseline;gap:6px}
+.chip.ok{background:var(--good-soft);color:var(--good)}
+.chip.new{background:transparent;color:var(--muted);border:1px solid var(--line)}
+
+/* progress tab */
+.grp{display:flex;flex-direction:column;gap:10px}
+.grp h3{margin:0;font-size:.95rem;font-weight:600;display:flex;align-items:center;gap:8px}
+.dot{width:10px;height:10px;border-radius:50%;background:var(--line);flex:none}
+.dot.g{background:var(--good)}.dot.m{background:var(--miss)}
+.hist{display:flex;flex-direction:column}
+.hrow{display:flex;align-items:center;gap:10px;padding:10px 0;border-bottom:1px solid var(--line);font-size:.9rem}
+.hrow:last-child{border-bottom:0}
+.hrow .d{flex:1;min-width:0}
+.hrow .d b{font-weight:600}
+.hrow .d small{display:block;color:var(--muted);font-size:.78rem}
+.hbar{width:72px;height:8px;border-radius:8px;background:var(--miss-soft);overflow:hidden;flex:none}
+.hbar i{display:block;height:100%;background:var(--good)}
+.pct{min-width:44px;flex:none;text-align:right;font-variant-numeric:tabular-nums;font-weight:600}
+.pct{white-space:nowrap}
+.confirm{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+.confirm .btn{width:auto;padding:10px 16px}
+
+/* tabs */
+nav{display:flex;border-top:1px solid var(--line);background:var(--surface)}
+nav button{flex:1;padding:8px 4px 8px;font-size:.82rem;font-weight:500;color:var(--muted);display:flex;flex-direction:column;align-items:center;gap:4px;position:relative}
+nav button[aria-current="page"]{color:var(--accent)}
+nav svg{width:22px;height:22px}
+@media (prefers-reduced-motion:reduce){.card,.progress i{transition:none}}
+</style>
+
+<div class="app">
+  <main id="view"></main>
+  <nav id="tabs">
+    <button data-tab="home"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="6" height="6" rx="1.5"/><path d="M4.5 7l1.2 1.2L8 5.8"/><rect x="3" y="14" width="6" height="6" rx="1.5"/><path d="M13 7h8M13 17h8"/></svg>Select</button>
+    <button data-tab="progress"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M5 20V11M12 20V5M19 20v-6"/></svg>Progress</button>
+  </nav>
+</div>
+
+<script>
+const LISTS = {
+  ufli: {name:"UFLI heart words", note:"Common words kids need to learn by heart (known as \"heart words\"), from the widely used UFLI resource.", words:"the said to do of from are was what your goes says their were talk walk could would should there where who one once two does many any been into friend because woman women move both four fourth people pretty nothing other another mother brother today very above among again against always almost floor poor door won son month hour minute Monday Wednesday February eye heart about answer honest honor truth truly busy build built sure laugh whom whose toward through learn earth early buy guy guess guest guide young touch enough tough rough".split(" ")},
+  fry2: {name:"Fry words 101–200", note:"The second 100 most common words in books, like over, new and only, from the classic Fry list.", words:"over new sound take only little work know place years live me back give most very after things our just name good sentence man think say great where help through much before line right too means old any same tell boy follow came want show also around form three small set put end does another well large must big even such because turn here why ask went men read need land different home us move try kind hand picture again change off play spell air away animal house point page letter mother answer found study still learn should America world".split(" ")},
+  dolch2: {name:"Dolch 2nd grade", note:"Common words 2nd graders see all the time, a classic (1948) list many schools still use.", words:"always around because been before best both buy call cold does don't fast first five found gave goes green its made many off or pull read right sing sit sleep tell their these those upon us use very wash which why wish work would write your".split(" ")},
+  custom: {name:"My own list", note:"Any words you type in, like a weekly word list from school.", words:[]}
+};
+
+/* Phonics groups: each pattern has a name, a one-line rule for the adult, and 10 words.
+   Words use only their own pattern plus patterns from earlier groups, so a miss points at the target pattern. */
+const PHONICS = [
+  {name:"Short vowels", grade:"Start of 1st grade",
+    note:"Words that use the short a, i, o, u and e sound like cat, sit, and up. These are the most common vowel sounds kids learn to read in 1st grade.",
+    patterns:[
+    ["short a","Says /a/ as in apple. A vowel followed by a consonant is short.","cat map bag sad ham jam van rat tap fan"],
+    ["short i","Says /i/ as in itch. A vowel followed by a consonant is short.","sit pig win lip fix kid bib dig hit mix"],
+    ["short o","Says /o/ as in octopus. A vowel followed by a consonant is short.","hot dog mop top box log pot rod fox job"],
+    ["short u","Says /u/ as in up. A vowel followed by a consonant is short.","cup sun bug rub mud nut tub hum gum bus"],
+    ["short e","Says /e/ as in egg. Often mixed up with short i.","bed net leg ten web pen wet hen jet red"]]},
+  {name:"Digraphs", grade:"1st grade", note:"Words where two letters make one sound, like ship, chin, thin, duck and ring. Usually learned in 1st grade.",
+    patterns:[
+    ["sh","Two letters, one sound: /sh/.","ship fish shop dish shut wish shed cash rush shin"],
+    ["ch","Two letters, one sound: /ch/.","chin chop rich chat much chip such chug check chick"],
+    ["th","Two sounds: quiet in thin, buzzing in this.","thin this that them math bath with then thud moth"],
+    ["ck","Says /k/ right after a short vowel at the end of a word.","duck back sock kick neck lock pick rack tuck deck"],
+    ["ng","Says /ng/ as in ring.","ring song king long sing hang bang lung wing rung"]]},
+  {name:"Blends and endings", grade:"1st grade", note:"Words with two consonants side by side, like stop and hand, plus endings like bell, pink and cats. Usually learned in 1st grade.",
+    patterns:[
+    ["ff ll ss zz","After a short vowel at the end of a short word, f, l, s and z double.","puff bell miss buzz hill mess doll fizz cuff pass"],
+    ["beginning blends","Two consonants at the start. Say both sounds.","stop flag trip crab plum snap drum grin slip clap"],
+    ["ending blends","Two consonants at the end. Say both sounds.","hand jump best milk tent lamp gift belt pond desk"],
+    ["nk","Read as chunks: ank, ink, onk, unk.","bank pink junk honk sink wink tank bunk think drink"],
+    ["wh","Says /w/ for most speakers.","when which whip whim whiz whack wham whiff whisk whelp"],
+    ["-s and -es","-s says /s/ or /z/. Add -es after s, x, sh and ch.","cats dogs cups bugs pigs boxes wishes dishes foxes buses"]]},
+  {name:"Silent e and soft c, g", grade:"1st grade", note:"Words where a silent e makes the vowel say its name, like cake and bike, plus a soft c or g, like face and page. Usually learned in 1st grade.",
+    patterns:[
+    ["a_e","Silent e makes the vowel say its name.","cake made gate name lake tape cave plane shade game"],
+    ["i_e","Silent e makes the vowel say its name.","bike time kite ride line pine hide smile five slide"],
+    ["o_e","Silent e makes the vowel say its name.","home rope bone nose hole joke stone note pole rode"],
+    ["u_e","Silent e makes u say /yoo/ (cube) or /oo/ (flute).","cube mule cute huge tube flute rule June tune use"],
+    ["soft c","c before e, i or y says /s/.","face ice race place rice nice cent mice space lace"],
+    ["soft g","g before e, i or y usually says /j/.","gem gel page cage age stage wage rage change hinge"]]},
+  {name:"Open vowels, y, -ed, -ing", grade:"1st grade", note:"Words like go and me, y at the end of my and happy, and the endings -ed and -ing. Usually learned in 1st grade.",
+    patterns:[
+    ["open vowels","A vowel at the end of a syllable says its name.","go no so me we he she be hi solo"],
+    ["y as long i","y at the end of a one-syllable word says long i.","my by fly cry try dry sky shy spy why"],
+    ["y as long e","y at the end of a longer word says long e.","happy baby funny puppy candy silly sunny lady penny bunny"],
+    ["-ed","Says /ed/ after t or d. Otherwise /t/ (jumped) or /d/ (filled).","jumped hopped kicked filled yelled smelled planned landed rested melted"],
+    ["-ing","Add -ing. Double a final consonant after a short vowel. Drop a silent e.","jumping running making sitting hiding singing swimming riding shopping baking"]]},
+  {name:"Long vowel teams", grade:"1st grade", note:"Two letters that team up to make a long vowel sound, like rain, tree, boat, snow and night. Usually learned in 1st grade.",
+    patterns:[
+    ["ai, ay","Say long a. ai goes in the middle, ay at the end.","rain mail tail paint wait play day say stay gray"],
+    ["ee","Says long e.","see tree feet green sleep seed bee week feel three"],
+    ["ea","Usually says long e.","eat sea team leaf beach meat dream clean peach seat"],
+    ["oa, oe","Say long o.","boat road coat soap goat toast float foam toe hoe"],
+    ["ow as in snow","Says long o, usually at the end of a word.","snow grow low show slow blow glow bowl throw own"],
+    ["igh, ie","Say long i.","night light high right bright flight sigh pie tie lie"]]},
+  {name:"Bossy r", grade:"1st to 2nd grade", note:"Words where r changes the vowel sound, like car, for, her, bird and fur. Usually learned in late 1st or 2nd grade.",
+    patterns:[
+    ["ar","The r changes the vowel: /ar/ as in car.","car farm star park barn jar shark yard cart dark"],
+    ["or, ore","Say /or/ as in for.","for corn fork horn sport storm more store shore snore"],
+    ["er, ir, ur","Three spellings, one sound: /er/.","her fern herd bird shirt first dirt fur turn hurt"],
+    ["wor, war","w changes or to /er/ (work) and ar to /or/ (warm).","work word worm world worth war warm warn swarm wart"],
+    ["air, are, ear","Say /air/ as in hair.","hair chair fair pair care share scare bare bear wear"],
+    ["ear, eer","Say /eer/ as in deer.","hear near ear dear fear clear year deer cheer steer"]]},
+  {name:"More vowel teams", grade:"2nd grade", note:"Vowel teams that make new sounds, like moon, book, blue, cow, boy, saw and ball. Usually learned in 2nd grade.",
+    patterns:[
+    ["oo as in moon","Long oo. Try this sound first.","moon food zoo pool room spoon boot tooth roof cool"],
+    ["oo as in book","Short oo. Most -ook words use it.","book look cook foot good wood hook took stood shook"],
+    ["ew, ue, ui","Say /oo/ as in blue.","new grew chew flew blue glue clue true fruit suit"],
+    ["ou, ow as in cow","Say /ow/. If ow doesn't sound right, try snow.","out cloud house mouth shout cow now down town owl"],
+    ["oi, oy","Say /oy/. oi goes in the middle, oy at the end.","coin oil boil soil point join boy toy joy enjoy"],
+    ["au, aw","Say /aw/. aw goes at the end or before n or l.","haul fault sauce launch saw paw draw lawn crawl straw"],
+    ["al, all","The l changes a to /aw/.","ball tall call fall small mall chalk stalk salt halt"]]},
+  {name:"Tricky spellings", grade:"2nd grade", note:"Less common spellings, like wash, head, catch, badge, knee, phone and key. Usually learned in 2nd grade.",
+    patterns:[
+    ["a after w","w makes a sound like short o.","wash want wand swap swan wasp swat squash squad watch"],
+    ["ea as in head","The second sound of ea. Try long e first, then this.","head bread dead deaf breath sweat thread spread ready heavy"],
+    ["-tch","Says /ch/ right after a short vowel.","catch match itch patch fetch pitch witch hutch sketch stretch"],
+    ["-dge","Says /j/ right after a short vowel.","badge fudge edge bridge judge hedge lodge ledge ridge nudge"],
+    ["silent letters","kn, wr, gn and mb: one letter is silent.","knee knot knock know write wrap wrist sign lamb thumb"],
+    ["ph","Says /f/.","phone photo graph dolphin phonics trophy nephew gopher orphan elephant"],
+    ["ey, eigh","ey at the end says long e (key). eigh says long a (eight).","key monkey donkey valley hockey eight weigh sleigh neigh weight"]]},
+  {name:"Longer words", grade:"2nd grade", note:"Two-syllable words like sunset, rabbit, robot and table. Kids learn where to split a word to sound out each part, usually in 2nd grade.",
+    patterns:[
+    ["compound words","Two small words joined. Read each part.","sunset bathtub cupcake inside sandbox backpack rainbow bedtime popcorn fishbowl"],
+    ["two closed syllables","Split between the two middle consonants: rab-bit.","rabbit napkin muffin kitten basket picnic tennis insect traffic goblin"],
+    ["open first syllable","One consonant in the middle: split before it and try a long vowel: ro-bot.","robot music unit pilot bacon open hotel student tulip final"],
+    ["closed first syllable","If a long vowel sounds wrong, split after the consonant: cab-in.","cabin lemon camel seven wagon planet salad finish habit punish"],
+    ["consonant + le","The e is silent: ta-ble sounds like /bul/.","table little apple bubble candle simple puzzle jungle middle bottle"],
+    ["schwa","An unstressed vowel relaxes to /uh/: a-bout.","about sofa along away ago banana panda zebra comma extra"]]}
+];
+/* Each phonics group becomes a set; remember which pattern each word belongs to */
+PHONICS.forEach((g,i) => {
+  const l = {kind:"phonics", name:g.name, note:g.note,
+    tags:g.patterns.map(p=>p[0]), rules:g.patterns.map(p=>p[1]), sound:{}, words:[]};
+  g.patterns.forEach(([,,ws],j) => ws.split(" ").forEach(w => { l.sound[w]=j; l.words.push(w); }));
+  LISTS["ph"+(i+1)] = l;
+});
+
+const KEY = "sightwords.v1";
+let S = {list:"ufli", custom:"", stats:{}};
+try { const raw = localStorage.getItem(KEY); if (raw) S = Object.assign(S, JSON.parse(raw)); } catch(e){}
+LISTS.custom.words = parseCustom(S.custom);
+/* Older saves: multi-select (sel), archived sets, and a rounds log. Keep one valid set and drop the rest. */
+if (Array.isArray(S.sel) && LISTS[S.sel[0]]) S.list = S.sel[0];
+if (!LISTS[S.list]) S.list = "ufli";
+delete S.sel; delete S.sessions;
+function save(){ try { localStorage.setItem(KEY, JSON.stringify(S)); } catch(e){} }
+function parseCustom(t){ return [...new Set((t||"").split(/[\s,;]+/).map(w=>w.trim()).filter(Boolean))]; }
+
+const view = document.getElementById("view"), app = document.querySelector(".app");
+const opened = new Set();   /* phonics cards opened with the chevron */
+let tab = "home", session = null, confirmReset = false, flash = "", editCustom = false;
+
+const words = (k=S.list) => LISTS[k].words;
+const st = w => S.stats[w.toLowerCase()];
+const status = w => { const r = st(w); return !r ? "new" : r.last ? "good" : "miss"; };
+function split(k=S.list){ const o={good:[],miss:[],new:[]}; words(k).forEach(w=>o[status(w)].push(w)); return o; }
+function shuffle(a){ a=[...a]; for(let i=a.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[a[i],a[j]]=[a[j],a[i]];} return a; }
+function esc(s){ return String(s).replace(/[&<>"']/g, c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c])); }
+const plural = (n,w) => `${n} ${w}${n===1?"":"s"}`;
+
+/* Three practice modes, picked from where the set stands:
+   new  = untried words, with a missed word mixed back in after every 4 new ones
+   miss = one pass through the missed words
+   all  = one pass through every word, once all are known */
+const MODES = {
+  new:  {label:"Practicing untried words",  done:"Every word has been tried."},
+  miss: {label:"Reviewing missed words",   done:"That's every missed word."},
+  all:  {label:"Reviewing all words", done:"That's the whole set."}
+};
+function nextMode(k=S.list){ const s = split(k); return s.new.length ? "new" : s.miss.length ? "miss" : "all"; }
+/* The Select button: [label, second line], from where the set stands */
+function startBtn(k=S.list){
+  const s = split(k), n = words(k).length;
+  if (!n) return ["Start Practice", "Add words to this set first"];
+  if (s.new.length === n) return ["Start Practice", plural(n,"word")];
+  if (s.new.length) return ["Continue Practice", plural(s.new.length,"untried word")];
+  if (s.miss.length) return ["Start Practice", `Review ${plural(s.miss.length,"missed word")}`];
+  return ["Review Words", `Review all ${n} words`];
+}
+
+/* One bar for known / practicing / not tried. big = counts printed inside the bar (Progress) */
+function meter(k, big){
+  const s = split(k), n = words(k).length || 1;
+  const seg = (cls, arr) => { const p = arr.length/n*100; return p ? `<i class="${cls}" style="width:${p}%">${big && p>=9 ? arr.length : ""}</i>` : ""; };
+  return `<div class="meter${big?" big":""}"><div class="bar">${seg("g",s.good)}${seg("m",s.miss)}${seg("n",s.new)}</div>
+    <div class="legend"><span><i class="dot g"></i>${s.good.length} known</span><span><i class="dot m"></i>${s.miss.length} practicing</span><span><i class="dot"></i>${s.new.length} not tried</span></div></div>`;
+}
+
+function setTab(t){ tab = t; render(); }
+document.getElementById("tabs").addEventListener("click", e => { const b = e.target.closest("button"); if (!b) return; if (session) { session = null; flash = ""; } setTab(b.dataset.tab); });
+
+function render(){
+  view.scrollTop = 0;
+  app.classList.toggle("practicing", !!session);
+  /* No tab is highlighted while a card is showing */
+  document.querySelectorAll("#tabs button").forEach(b => !session && b.dataset.tab===tab ? b.setAttribute("aria-current","page") : b.removeAttribute("aria-current"));
+  if (session) return renderCard();
+  if (tab === "progress") return renderProgress();
+  renderHome();
+}
+
+/* ---------- Select: choose the word set ---------- */
+function setCards(filter){
+  const check = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12l5 5 9-10"/></svg>`;
+  const chev = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9l6 6 6-6"/></svg>`;
+  return `<div class="sets">${Object.entries(LISTS).filter(([k])=>filter(k)).map(([k,l]) => {
+    /* Phonics cards start collapsed to one row; the chosen one is always open */
+    const folds = l.kind==="phonics", open = !folds || S.list===k || opened.has(k);
+    return `
+    <div class="set${open?"":" shut"}" role="button" tabindex="0" data-list="${k}" aria-pressed="${S.list===k}">
+      <div class="top"><div><b>${l.name}${l.words.length?`<span class="count">${l.words.length} words</span>`:""}</b>${open?`<span class="note">${esc(l.note)}</span>`:""}</div>${folds && S.list!==k ? `<span class="chev" role="button" tabindex="0" aria-label="Show details" aria-expanded="${open}">${chev}</span>` : ""}<span class="check">${S.list===k?check:""}</span></div>
+      ${open && l.words.length ? meter(k) : ""}
+      ${k==="custom" ? customPart() : ""}
+    </div>`; }).join("")}</div>`;
+}
+/* My own list: an Edit words link at the bottom of the card; the card opens to the text field when editing or empty */
+function customPart(){
+  const n = LISTS.custom.words.length, open = S.list==="custom" && (editCustom || !n);
+  if (open) return `<div class="editor">
+      <label for="customText">Type or paste words, separated by spaces or commas. Press Enter to save.</label>
+      <textarea id="customText" placeholder="again could every fly from">${esc(LISTS.custom.words.join(" "))}</textarea>
+      <div class="row"><button class="btn btn-soft" id="saveCustom">Save words</button>${n?`<button class="btn btn-ghost" id="cancelCustom">Cancel</button>`:""}</div>
+    </div>`;
+  return n ? `<button class="linkbtn edit" id="editCustom">Edit words</button>` : "";
+}
+function renderHome(){
+  view.innerHTML = `
+    <div><h1>Reading Practice Cards</h1><p class="muted sub">An app for practicing reading and sounding out common 2nd grade words</p></div>
+    <div class="stack"><div><h2>Sight Word Sources</h2><p class="muted sub">Common words kids learn to read on sight, from widely used classroom lists.</p></div>${setCards(k => !LISTS[k].kind)}</div>
+    <div class="stack"><div><h2>Phonics Patterns</h2><p class="muted sub">Covers the core phonics patterns of 1st and 2nd grade, starting with the most common ones.</p></div>${setCards(k => LISTS[k].kind==="phonics")}</div>
+    <div class="dock"><button class="btn btn-primary btn-two" id="go" ${words().length?"":"disabled"}>${startBtn()[0]}<small>${esc(startBtn()[1])}</small></button></div>`;
+  view.querySelectorAll("[data-list]").forEach(b => {
+    b.onclick = e => {
+      if (e.target.closest(".editor")) return;
+      const k = b.dataset.list;
+      if (S.list === k) return;
+      S.list = k; confirmReset = false; editCustom = false; save();
+      const y = view.scrollTop; renderHome(); view.scrollTop = y;
+    };
+    b.onkeydown = e => { if (e.target===b && (e.key==="Enter"||e.key===" ")) { e.preventDefault(); b.click(); } };
+  });
+  view.querySelectorAll(".chev").forEach(c => {
+    const toggle = e => { e.stopPropagation(); e.preventDefault(); const k = c.closest(".set").dataset.list;
+      opened.has(k) ? opened.delete(k) : opened.add(k); const y = view.scrollTop; renderHome(); view.scrollTop = y; };
+    c.onclick = toggle; c.onkeydown = e => { if (e.key==="Enter"||e.key===" ") toggle(e); };
+  });
+  const sc = view.querySelector("#saveCustom");
+  const keep = fn => () => { const y = view.scrollTop; fn(); renderHome(); view.scrollTop = y; };
+  const saveWords = keep(() => { S.custom = view.querySelector("#customText").value; LISTS.custom.words = parseCustom(S.custom); editCustom = false; save(); });
+  if (sc) {
+    sc.onclick = saveWords;
+    view.querySelector("#customText").addEventListener("keydown", e => { if (e.key==="Enter" && !e.shiftKey) { e.preventDefault(); saveWords(); } });
+  }
+  const ec = view.querySelector("#editCustom");
+  if (ec) ec.onclick = e => { e.stopPropagation(); keep(() => { S.list = "custom"; editCustom = true; save(); })(); const t = view.querySelector("#customText"); if (t) t.focus(); };
+  const cc = view.querySelector("#cancelCustom"); if (cc) cc.onclick = keep(() => { editCustom = false; });
+  view.querySelector("#go").onclick = () => start(nextMode());
+}
+
+/* ---------- Practice: full screen, no rounds. Every grade saves right away. ---------- */
+function start(mode){
+  const s = split(), pile = mode==="new" ? s.new : mode==="miss" ? s.miss : words();
+  if (!pile.length) return;
+  session = {mode, deck: shuffle(pile), i:0, cur:null, fromDeck:false, since:0, hist:[]};
+  flash = "";
+  if (pickNext()) render();
+}
+/* Choose the next card. In "new" mode a missed word comes back after every 4 new ones,
+   skipping anything shown in the last 6 cards. Returns false when the pile is empty. */
+function pickNext(){
+  const s = session;
+  if (s.mode === "new" && s.since >= 4) {
+    const recent = new Set(s.hist.slice(-6).map(h => h.w));
+    const pool = words().filter(w => status(w)==="miss" && !recent.has(w));
+    if (pool.length) { s.cur = pool[Math.floor(Math.random()*pool.length)]; s.fromDeck = false; s.since = 0; return true; }
+  }
+  while (s.i < s.deck.length) {
+    const w = s.deck[s.i++];
+    if (s.mode === "new" && status(w) !== "new") continue;   /* tried meanwhile (same word in another set) */
+    s.cur = w; s.fromDeck = true; s.since++; return true;
+  }
+  return false;
+}
+
+function renderCard(){
+  const s = session, w = s.cur, n = s.deck.length;
+  view.innerHTML = `
+    <div class="topbar">
+      <div class="progress"><i style="width:${(s.i-1)/n*100}%"></i></div>
+      <span class="counter">${s.i} / ${n}</span>
+    </div>
+    <span class="mode-label">${MODES[s.mode].label}</span>
+    <div class="stage">
+      <div class="card" id="card">
+        ${s.fromDeck ? "" : `<span class="again">Another try</span>`}
+        <div class="lines"><i></i></div>
+        <span class="stamp miss" id="sMiss">Practice</span>
+        <span class="stamp good" id="sGood">Got it</span>
+        <div class="word">${esc(w)}</div>
+      </div>
+    </div>
+    <div class="answer">
+      <button class="btn b-miss" id="no">← Practice</button>
+      <button class="btn b-good" id="yes">Got it →</button>
+    </div>
+    <div style="text-align:center"><button class="linkbtn" id="undo" ${s.hist.length?"":`style="visibility:hidden" tabindex="-1"`}>Undo last</button></div>`;
+  view.querySelector("#yes").onclick = () => answer(1);
+  view.querySelector("#no").onclick = () => answer(0);
+  view.querySelector("#undo").onclick = undo;
+  bindSwipe(view.querySelector("#card"));
+}
+
+function answer(ok){
+  const s = session; if (!s || s.busy) return;
+  s.busy = true;
+  const card = view.querySelector("#card");
+  if (card){ card.style.transform = `translateX(${ok?120:-120}%) rotate(${ok?12:-12}deg)`; card.style.opacity = 0; }
+  const w = s.cur, k = w.toLowerCase();
+  const prev = S.stats[k] ? {...S.stats[k]} : null;
+  const r = S.stats[k] || {c:0,a:0,last:null};
+  r.a++; if (ok) r.c++; r.last = ok; r.t = Date.now();
+  S.stats[k] = r; save();
+  s.hist.push({w, prev, snap:{i:s.i, cur:s.cur, fromDeck:s.fromDeck, since:s.since}});
+  setTimeout(() => {
+    s.busy = false;
+    if (session !== s) return;   /* a tab was tapped during the swipe animation */
+    if (pickNext()) render(); else stop(MODES[s.mode].done);
+  }, 180);
+}
+
+function undo(){
+  const s = session; if (!s || s.busy) return; const last = s.hist.pop(); if (!last) return;
+  const k = last.w.toLowerCase();
+  if (last.prev) S.stats[k] = last.prev; else delete S.stats[k];
+  Object.assign(s, last.snap); save(); render();
+}
+
+function stop(msg){ session = null; flash = msg; setTab("progress"); }
+
+function bindSwipe(card){
+  let x0=null, dx=0;
+  const sg = view.querySelector("#sGood"), sm = view.querySelector("#sMiss");
+  card.addEventListener("pointerdown", e => { x0 = e.clientX; dx = 0; card.classList.add("dragging"); card.setPointerCapture(e.pointerId); });
+  card.addEventListener("pointermove", e => {
+    if (x0===null) return; dx = e.clientX - x0;
+    card.style.transform = `translateX(${dx}px) rotate(${dx/20}deg)`;
+    sg.style.opacity = Math.max(0, Math.min(1, dx/80)); sm.style.opacity = Math.max(0, Math.min(1, -dx/80));
+  });
+  const end = () => {
+    if (x0===null) return; x0=null; card.classList.remove("dragging");
+    if (dx > 80) answer(1); else if (dx < -80) answer(0);
+    else { card.style.transform=""; sg.style.opacity=0; sm.style.opacity=0; }
+  };
+  card.addEventListener("pointerup", end); card.addEventListener("pointercancel", end);
+}
+
+document.addEventListener("keydown", e => {
+  if (!session) return;
+  if (e.key==="ArrowRight") { e.preventDefault(); answer(1); }
+  if (e.key==="ArrowLeft") { e.preventDefault(); answer(0); }
+  if (e.key==="Backspace") { e.preventDefault(); undo(); }
+  if (e.key==="Escape") { e.preventDefault(); stop(""); }
+});
+
+/* ---------- Progress: the chosen set ---------- */
+/* Phonics groups: how each pattern is going, with its rule for the adult */
+function byPattern(k){
+  const l = LISTS[k];
+  const rows = l.tags.map((t,i) => {
+    const ws = l.words.filter(w => l.sound[w]===i), known = ws.filter(w => status(w)==="good").length;
+    return `<div class="hrow"><div class="d"><b>${esc(t)}</b><small>${esc(l.rules[i])}</small></div>
+      <div class="hbar"><i style="width:${known/ws.length*100}%"></i></div><span class="pct">${known} of ${ws.length}</span></div>`;
+  }).join("");
+  return `<div class="panel"><h2>By pattern · ${esc(l.name)}</h2><div class="hist">${rows}</div></div>`;
+}
+function renderProgress(){
+  const k = S.list, s = split(k), all = words(k);
+  const grp = (title, dot, arr, cls) => arr.length ? `
+    <div class="grp"><h3><span class="dot ${dot}"></span>${title} · ${arr.length}</h3>
+    <div class="chips">${arr.map(w=>`<span class="chip ${cls}">${esc(w)}</span>`).join("")}</div></div>` : "";
+  /* Continue while there are untried words; then missed words; then review the whole set */
+  /* Main button matches the Select page exactly; the second offers the next pile down */
+  const mode = nextMode(k), [label, sub] = startBtn(k);
+  const second = mode==="new" && s.miss.length ? ["miss", `Review ${plural(s.miss.length,"missed word")}`]
+    : mode==="miss" ? ["all", `Review all ${all.length} words`] : null;
+  view.innerHTML = `
+    <div><p class="eyebrow">Progress</p><h1>${esc(LISTS[k].name)}</h1></div>
+    ${!all.length ? `<p class="muted">This set has no words yet. Add some on Select.</p>` : `
+    ${flash ? `<p class="flash">Nice work. ${esc(flash)}</p>` : ""}
+    ${meter(k, true)}
+    <div class="stack"><button class="btn btn-primary btn-two" data-act="${mode}">${label}<small>${esc(sub)}</small></button>${second ? `<button class="btn btn-soft" data-act="${second[0]}">${second[1]}</button>` : ""}</div>
+    ${LISTS[k].tags ? byPattern(k) : ""}
+    ${grp("Practicing","m",s.miss,"")}
+    ${grp("Known","g",s.good,"ok")}
+    ${grp("Not tried","",s.new,"new")}
+    <div class="confirm">
+      ${confirmReset ? `<span class="muted">Reset progress and start over?</span><button class="btn b-miss" id="yesReset">Reset progress</button><button class="btn btn-ghost" id="noReset">Cancel</button>`
+        : `<button class="reset" id="reset">Reset progress <span>(to start over)</span></button>`}
+    </div>
+    <p class="hint">Progress is saved in this browser on this device. Data is stored 100% locally and NEVER sent to servers.</p>`}`;
+  flash = "";
+  view.querySelectorAll("[data-act]").forEach(b => b.onclick = () => start(b.dataset.act));
+  const r = view.querySelector("#reset"); if (r) r.onclick = () => { confirmReset=true; renderProgress(); };
+  const y = view.querySelector("#yesReset"); if (y) y.onclick = () => { all.forEach(w=>delete S.stats[w.toLowerCase()]); save(); confirmReset=false; renderProgress(); };
+  const n = view.querySelector("#noReset"); if (n) n.onclick = () => { confirmReset=false; renderProgress(); };
+}
+
+
+setTab("home");
+</script>
