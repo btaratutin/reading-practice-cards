@@ -79,7 +79,9 @@ button:focus-visible,textarea:focus-visible{outline:3px solid var(--accent);outl
 .meter.big .bar .n{background:var(--line);color:var(--muted)}
 .meter.big .legend{font-size:.85rem}
 textarea{width:100%;box-sizing:border-box;min-height:100px;border:1.5px solid var(--line);border-radius:12px;padding:10px;font:inherit;background:var(--bg);color:var(--ink);resize:vertical}
-.dock{position:sticky;bottom:0;padding-top:8px;background:linear-gradient(to bottom,transparent,var(--bg) 30%)}
+/* negative bottom and margins cancel main's padding, so the dock reaches the tab bar and both edges */
+.dock{position:sticky;bottom:-24px;z-index:2;margin:0 -16px -24px;padding:16px 16px 10px}
+.dock::before{content:"";position:absolute;inset:0;z-index:-1;pointer-events:none;background:color-mix(in srgb,var(--bg) 60%,transparent);-webkit-backdrop-filter:blur(10px);backdrop-filter:blur(10px);-webkit-mask-image:linear-gradient(to bottom,transparent,#000 16px);mask-image:linear-gradient(to bottom,transparent,#000 16px)}
 
 .btn-two{display:flex;flex-direction:column;align-items:center;gap:2px;padding:12px 18px}
 .btn-two small{font-size:.8rem;font-weight:400;opacity:.85}
