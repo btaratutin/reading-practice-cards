@@ -4,7 +4,8 @@ Last updated 2026-11-24. Read this first when continuing in a new chat.
 
 ## Where things are
 
-- Live artifact: https://claude.ai/artifact/2C2czPfsfcvGic9KEkS1Ky (version 26, icon "cards"). To update it from a new chat, read the artifact first, then publish with that `url` so the link stays the same.
+- Live app: https://btaratutin.github.io/reading-practice-cards/ (GitHub Pages, repo btaratutin/reading-practice-cards). To publish, commit and push to `main`. Do not publish to the Claude artifact anymore.
+- Keep `Readme.md` up to date with each change, without being asked.
 - Source: `reading-practice-cards.html` in this folder. It's the single source of truth, and the word bank lives inside it.
 - Archive: `archive/sound-contrast-sets.js`.
 
@@ -43,12 +44,13 @@ Last updated 2026-11-24. Read this first when continuing in a new chat.
 
 ## Technical notes
 
-- Single HTML file with no doctype, html or body tags (the artifact host adds them). Fonts are Andika (cards) and Lexend (UI) from Google Fonts. Theme tokens are on `:root`, with dark mode under the prefers-color-scheme and `[data-theme="dark"]` blocks.
-- State: `S = {list, custom, stats:{word:{c,a,last,t}}}`. Every storage call is wrapped in try/catch. The in-memory `session` = {mode, deck, i, cur, fromDeck, since, hist}; it is never saved.
+- Single HTML file with no doctype, html or body tags (it began as a Claude artifact). Fonts are Andika (cards) and Lexend (UI) from Google Fonts. Theme tokens are on `:root`, with dark mode under the prefers-color-scheme and `[data-theme="dark"]` blocks.
+- State: `S = {list, custom, shown, stats:{word:{c,a,last,t}}}`. Every storage call is wrapped in try/catch. The in-memory `session` = {mode, deck, i, cur, fromDeck, since, hist}; it is never saved.
 - `LISTS`: ufli, fry2, dolch2, custom, ph1–ph10 (built from `PHONICS`, with `tags`, `rules` and a `sound` map from word to pattern index). Old saved selections of archived sets fall back to UFLI.
 - Key functions: `nextMode()` and `startSub()` pick and describe the pile, `start(mode)` opens practice, `pickNext()` chooses the next card (including the mixed-in missed words), `answer()` saves a grade and a snapshot so `undo()` restores both, `stop()` returns to Progress, `setCards()` draws the Select cards, `byPattern()` draws the phonics panel, and `bindSwipe()` handles 80px swipes. Keys: → right, ← practice, Backspace undo, Esc done.
 - "Undo last" always takes up its space (hidden with visibility), so the Practice and Got it buttons never move.
-- Phonics cards start collapsed to one row (name, count, chevron). The chevron opens a card without selecting it (`opened` set, not saved); the selected card is always open. Prototype added in version 26: collapsed cards hide the progress bar.
+- Phonics groups show 3 at a time as full cards. "Show 3 more" under them adds 3 and the count is saved (`S.shown`, see `shownPh()`). The selected group always shows. This replaced the chevron prototype, which was the wrong version.
+- Start button dock: `.dock` reaches the tab bar and both edges and blurs the cards that scroll behind it.
 - The file starts with charset and viewport meta tags and sets `body{margin:0}`, so the same file works on claude.ai and as a standalone page (for example GitHub Pages). It still has no doctype, so it renders in quirks mode when standalone; tested fine.
 - The tab bar has no safe-area padding: the claude.ai page around the artifact already handles it.
 - Bug pass (version 23): global `box-sizing:border-box` (div set cards overflowed sideways without it); the swipe timer checks the session is still current, so tapping a tab mid-swipe can't reopen the card; the counter shows the deck position (an "Another try" card keeps the last number); long custom words wrap in chips; "N of 10" no longer pokes past the By pattern panel. Checked at 320, 390, 560 and 1024px, light and dark, with old and corrupt saved data.

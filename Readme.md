@@ -6,7 +6,7 @@ Flash cards for early readers (1st and 2nd grade). The child reads each word out
 
 ## How to use it
 
-1. **Select:** Pick one word set. Each card says what it practices. Tap **Start practice**. It picks up where you left off: untried words first, then missed words, then a review of the whole set. The line under the button says which.
+1. **Select:** Pick one word set. Each card says what it practices. Phonics groups show 3 at a time. Tap **Show 3 more** to see the rest. Tap **Start practice**. It picks up where you left off: untried words first, then missed words, then a review of the whole set. The line under the button says which.
 2. **Practice:** Swipe right or press → when the word is read correctly. Swipe left or press ← when it isn't. Backspace or "Undo last" takes back the last answer. Tap Select or Progress to stop anytime. Every answer is already saved. While working through untried words, a missed word comes back every few cards for another try.
 3. **Progress:** Shows known, practicing and not tried for the picked set, buttons to continue or practice missed words, a breakdown by phonics pattern with the rule for each pattern, and the word lists.
 
@@ -39,7 +39,7 @@ Progress is saved only in the browser on the device that uses it (localStorage k
 
 ## Files
 
-- `reading-practice-cards.html`: the whole app in one file (HTML, CSS, JS, and all word lists). The live artifact is published from this file.
+- `reading-practice-cards.html`: the whole app in one file (HTML, CSS, JS, and all word lists). The live app is published from this file.
 - `index.html`: sends visitors of the GitHub Pages site to the app. Pushing to `main` updates the site.
 - `archive/sound-contrast-sets.js`: archived "Sounds that get mixed up" sets (short o vs short e, j vs w) with look-alike pairs, plus the code to bring them back for a specific student.
 - `Context.md`: decisions, data model and history for continuing work in a new chat.

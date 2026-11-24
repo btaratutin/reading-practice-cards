@@ -55,13 +55,7 @@ button:focus-visible,textarea:focus-visible{outline:3px solid var(--accent);outl
 .editor .row{display:flex;gap:10px}
 .editor .row .btn{padding:12px 16px}
 .editor .row .btn-ghost{width:auto}
-.chev{display:grid;place-items:center;width:28px;height:28px;margin:-3px 2px 0 0;border-radius:8px;color:var(--muted);flex:none}
-.chev svg{width:18px;height:18px;transition:transform .2s}
-.chev[aria-expanded="true"] svg{transform:rotate(180deg)}
-.chev:hover{background:var(--accent-soft);color:var(--accent)}
-.set.shut{gap:0}
-.set.shut .top{align-items:center}
-.set.shut .check{margin-top:0}
+.more{align-self:center;padding:10px 18px;border-radius:999px;border:1.5px solid var(--line);background:var(--surface);color:var(--accent);font-weight:500;font-size:.9rem}
 .set .edit{align-self:flex-start;padding:2px 0}
 .set .count{margin-left:8px;font-size:.8rem;font-weight:400;color:var(--muted)}
 .check{width:22px;height:22px;border-radius:50%;border:2px solid var(--line);flex:none;display:grid;place-items:center;margin-top:2px}
@@ -268,7 +262,9 @@ function save(){ try { localStorage.setItem(KEY, JSON.stringify(S)); } catch(e){
 function parseCustom(t){ return [...new Set((t||"").split(/[\s,;]+/).map(w=>w.trim()).filter(Boolean))]; }
 
 const view = document.getElementById("view"), app = document.querySelector(".app");
-const opened = new Set();   /* phonics cards opened with the chevron */
+/* Phonics groups show 3 at a time; "Show more" adds 3 and is remembered. The chosen group always shows. */
+const PH = Object.keys(LISTS).filter(k => LISTS[k].kind==="phonics");
+const shownPh = () => Math.min(PH.length, Math.max(S.shown || 3, PH.indexOf(S.list) + 1));
 let tab = "home", session = null, confirmReset = false, flash = "", editCustom = false;
 
 const words = (k=S.list) => LISTS[k].words;
@@ -323,16 +319,12 @@ function render(){
 /* ---------- Select: choose the word set ---------- */
 function setCards(filter){
   const check = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12l5 5 9-10"/></svg>`;
-  const chev = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9l6 6 6-6"/></svg>`;
-  return `<div class="sets">${Object.entries(LISTS).filter(([k])=>filter(k)).map(([k,l]) => {
-    /* Phonics cards start collapsed to one row; the chosen one is always open */
-    const folds = l.kind==="phonics", open = !folds || S.list===k || opened.has(k);
-    return `
-    <div class="set${open?"":" shut"}" role="button" tabindex="0" data-list="${k}" aria-pressed="${S.list===k}">
-      <div class="top"><div><b>${l.name}${l.words.length?`<span class="count">${l.words.length} words</span>`:""}</b>${open?`<span class="note">${esc(l.note)}</span>`:""}</div>${folds && S.list!==k ? `<span class="chev" role="button" tabindex="0" aria-label="Show details" aria-expanded="${open}">${chev}</span>` : ""}<span class="check">${S.list===k?check:""}</span></div>
-      ${open && l.words.length ? meter(k) : ""}
+  return `<div class="sets">${Object.entries(LISTS).filter(([k])=>filter(k)).map(([k,l]) => `
+    <div class="set" role="button" tabindex="0" data-list="${k}" aria-pressed="${S.list===k}">
+      <div class="top"><div><b>${l.name}${l.words.length?`<span class="count">${l.words.length} words</span>`:""}</b><span class="note">${esc(l.note)}</span></div><span class="check">${S.list===k?check:""}</span></div>
+      ${l.words.length ? meter(k) : ""}
       ${k==="custom" ? customPart() : ""}
-    </div>`; }).join("")}</div>`;
+    </div>`).join("")}</div>`;
 }
 /* My own list: an Edit words link at the bottom of the card; the card opens to the text field when editing or empty */
 function customPart(){
@@ -348,7 +340,7 @@ function renderHome(){
   view.innerHTML = `
     <div><h1>Reading Practice Cards</h1><p class="muted sub">An app for practicing reading and sounding out common 2nd grade words</p></div>
     <div class="stack"><div><h2>Sight Word Sources</h2><p class="muted sub">Common words kids learn to read on sight, from widely used classroom lists.</p></div>${setCards(k => !LISTS[k].kind)}</div>
-    <div class="stack"><div><h2>Phonics Patterns</h2><p class="muted sub">Covers the core phonics patterns of 1st and 2nd grade, starting with the most common ones.</p></div>${setCards(k => LISTS[k].kind==="phonics")}</div>
+    <div class="stack"><div><h2>Phonics Patterns</h2><p class="muted sub">Covers the core phonics patterns of 1st and 2nd grade, starting with the most common ones.</p></div>${setCards(k => PH.indexOf(k) > -1 && PH.indexOf(k) < shownPh())}${shownPh() < PH.length ? `<button class="more" id="more">Show ${Math.min(3, PH.length-shownPh())} more</button>` : ""}</div>
     <div class="dock"><button class="btn btn-primary btn-two" id="go" ${words().length?"":"disabled"}>${startBtn()[0]}<small>${esc(startBtn()[1])}</small></button></div>`;
   view.querySelectorAll("[data-list]").forEach(b => {
     b.onclick = e => {
@@ -360,11 +352,6 @@ function renderHome(){
     };
     b.onkeydown = e => { if (e.target===b && (e.key==="Enter"||e.key===" ")) { e.preventDefault(); b.click(); } };
   });
-  view.querySelectorAll(".chev").forEach(c => {
-    const toggle = e => { e.stopPropagation(); e.preventDefault(); const k = c.closest(".set").dataset.list;
-      opened.has(k) ? opened.delete(k) : opened.add(k); const y = view.scrollTop; renderHome(); view.scrollTop = y; };
-    c.onclick = toggle; c.onkeydown = e => { if (e.key==="Enter"||e.key===" ") toggle(e); };
-  });
   const sc = view.querySelector("#saveCustom");
   const keep = fn => () => { const y = view.scrollTop; fn(); renderHome(); view.scrollTop = y; };
   const saveWords = keep(() => { S.custom = view.querySelector("#customText").value; LISTS.custom.words = parseCustom(S.custom); editCustom = false; save(); });
@@ -375,6 +362,8 @@ function renderHome(){
   const ec = view.querySelector("#editCustom");
   if (ec) ec.onclick = e => { e.stopPropagation(); keep(() => { S.list = "custom"; editCustom = true; save(); })(); const t = view.querySelector("#customText"); if (t) t.focus(); };
   const cc = view.querySelector("#cancelCustom"); if (cc) cc.onclick = keep(() => { editCustom = false; });
+  const more = view.querySelector("#more");
+  if (more) more.onclick = () => { const y = view.scrollTop; S.shown = shownPh() + 3; save(); renderHome(); view.scrollTop = y; };
   view.querySelector("#go").onclick = () => start(nextMode());
 }
 
